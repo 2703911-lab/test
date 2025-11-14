@@ -4,30 +4,294 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ninja Ball Slayer</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+
+        canvas {
+            display: block;
+            border: 2px solid white;
+        }
+
+        #mainMenu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        #mainMenu h1 {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #gameContainer {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+        }
+
+        #score, #time {
+            margin-bottom: 10px;
+        }
+
+        #shop {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+    </style>
 </head>
 <body>
-    <div id="mainMenu" class="menu">
+    <!-- Main Menu -->
+    <div id="mainMenu">
         <h1>Ninja Ball Slayer</h1>
         <button id="easyMode">Easy Mode (25 Minutes)</button>
         <button id="hardMode">Hard Mode (10 Minutes)</button>
     </div>
 
-    <div class="game-container hidden" id="gameContainer">
+    <!-- Game Container -->
+    <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
     </div>
 
-    <div class="ui hidden" id="ui">
+    <!-- UI -->
+    <div class="ui" id="ui">
         <div id="score">Score: 0</div>
         <div id="time">Time: 25:00</div>
         <button id="shopButton">Shop (E)</button>
-        <div id="shop" class="hidden">
+        <div id="shop">
             <h3>Shop</h3>
             <button id="buyWeapon1">Buy Aura Pistol (10k points)</button>
             <button id="buyWeapon2">Buy God Blaster (20k points)</button>
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const mainMenu = document.getElementById('mainMenu');
+        const gameContainer = document.getElementById('gameContainer');
+        const ui = document.getElementById('ui');
+        const scoreElement = document.getElementById('score');
+        const timeElement = document.getElementById('time');
+        const shopButton = document.getElementById('shopButton');
+        const shopElement = document.getElementById('shop');
+        const buyWeapon1Button = document.getElementById('buyWeapon1');
+        const buyWeapon2Button = document.getElementById('buyWeapon2');
+
+        let score = 0;
+        let timeLeft = 1500; // Default: Easy mode (25 minutes)
+        let playerSpeed = 5; // Speed of the player
+        let currentWeapon = "Aura Pistol";
+        let gameInterval;
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            color: 'rgba(255, 255, 255, 0.8)',
+            glowColor: 'rgba(255, 255, 255, 0.6)',
+            glowIntensity: 1
+        };
+        let bullets = [];
+        let balls = [];
+        let keys = {};
+
+        // Start the game based on difficulty mode
+        document.getElementById('easyMode').addEventListener('click', () => startGame('easy'));
+        document.getElementById('hardMode').addEventListener('click', () => startGame('hard'));
+
+        // Toggle shop UI
+        shopButton.addEventListener('click', () => {
+            shopElement.style.display = (shopElement.style.display === 'none' || shopElement.style.display === '') ? 'block' : 'none';
+        });
+
+        // Weapon purchase logic
+        buyWeapon1Button.addEventListener('click', () => {
+            if (score >= 10000 && currentWeapon !== "Aura Pistol") {
+                score -= 10000;
+                currentWeapon = "Aura Pistol";
+                alert("Bought Aura Pistol!");
+            }
+        });
+
+        buyWeapon2Button.addEventListener('click', () => {
+            if (score >= 20000 && currentWeapon !== "God Blaster") {
+                score -= 20000;
+                currentWeapon = "God Blaster";
+                alert("Bought God Blaster!");
+            }
+        });
+
+        function startGame(mode) {
+            // Hide main menu and show game container
+            mainMenu.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            ui.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            if (mode === 'easy') {
+                timeLeft = 1500; // 25 minutes
+                playerSpeed = 5;
+            } else {
+                timeLeft = 600; // 10 minutes
+                playerSpeed = 3;
+            }
+
+            gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
+        }
+
+        function gameLoop() {
+            updateTime();
+            updatePlayer();
+            updateBullets();
+            updateBalls();
+            checkCollisions();
+            drawGame();
+        }
+
+        function updatePlayer() {
+            if (keys['w'] && player.y > 0) player.y -= playerSpeed;
+            if (keys['s'] && player.y < canvas.height) player.y += playerSpeed;
+            if (keys['a'] && player.x > 0) player.x -= playerSpeed;
+            if (keys['d'] && player.x < canvas.width) player.x += playerSpeed;
+        }
+
+        function updateBullets() {
+            if (keys[' '] && !bullets.length) {
+                bullets.push({
+                    x: player.x,
+                    y: player.y,
+                    radius: 5,
+                    color: "white",
+                    speed: 10
+                });
+            }
+        }
+
+        function updateBalls() {
+            if (Math.random() < 0.02) {
+                balls.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: 15,
+                    color: "red",
+                    speed: Math.random() * 2 + 2
+                });
+            }
+
+            balls.forEach(ball => {
+                const angle = Math.atan2(player.y - ball.y, player.x - ball.x);
+                ball.x += Math.cos(angle) * ball.speed;
+                ball.y += Math.sin(angle) * ball.speed;
+            });
+        }
+
+        function checkCollisions() {
+            bullets.forEach((bullet, bIndex) => {
+                balls.forEach((ball, ballIndex) => {
+                    const dist = Math.hypot(bullet.x - ball.x, bullet.y - ball.y);
+                    if (dist < bullet.radius + ball.radius) {
+                        balls.splice(ballIndex, 1);  // Remove ball
+                        bullets.splice(bIndex, 1);   // Remove bullet
+                        score += 100;                // Increase score
+                    }
+                });
+            });
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.glowColor;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = player.glowColor;
+            ctx.fill();
+
+            // Draw bullets
+            bullets.forEach(bullet => {
+                bullet.y -= bullet.speed;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fillStyle = bullet.color;
+                ctx.fill();
+            });
+
+            // Draw balls
+            balls.forEach(ball => {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+            });
+
+            // Draw UI (Score, Time)
+            scoreElement.textContent = `Score: ${score}`;
+            timeElement.textContent = `Time: ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`;
+        }
+
+        function updateTime() {
+            timeLeft -= 1 / 60;
+            if (timeLeft <= 0) {
+                clearInterval(gameInterval);
+                alert("Game Over! Time's up!");
+                window.location.reload();
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+    </script>
 </body>
 </html>
