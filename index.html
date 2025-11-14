@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ninja Ball Slayer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div class="ui">
+        <div id="score">Score: 0</div>
+        <div id="time">Time: 25:00</div>
+        <button id="shopButton">Shop (E)</button>
+        <div id="shop" class="hidden">
+            <h3>Shop</h3>
+            <button id="buyWeapon1">Buy Aura Pistol (10k points)</button>
+            <button id="buyWeapon2">Buy God Blaster (20k points)</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
