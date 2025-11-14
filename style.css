@@ -6,6 +6,43 @@ body {
     overflow: hidden;
 }
 
+.menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+}
+
+.menu h1 {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.hidden {
+    display: none;
+}
+
 .game-container {
     position: relative;
     width: 100vw;
@@ -33,7 +70,13 @@ canvas {
     margin-bottom: 10px;
 }
 
-button {
+#shop {
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#shopButton {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
     border: none;
@@ -41,20 +84,6 @@ button {
     margin-top: 10px;
     cursor: pointer;
     transition: 0.3s;
-}
-
-button:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-.hidden {
-    display: none;
-}
-
-#shop {
-    background-color: rgba(0, 0, 0, 0.8);
-    padding: 20px;
-    border-radius: 10px;
 }
 
 button:active {
