@@ -5,7 +5,7 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let score = 0;
-let timeLeft = 1500;  // 25 minutes in seconds
+let timeLeft = 1500; // Default is 25 minutes
 let playerHealth = 100;
 let currentWeapon = "Aura Pistol";
 let isShopOpen = false;
@@ -21,10 +21,14 @@ let bullets = [];
 let balls = [];
 let keys = {};
 
-// Game loop interval
-let gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
+// Main Menu Elements
+const mainMenu = document.getElementById('mainMenu');
+const easyModeButton = document.getElementById('easyMode');
+const hardModeButton = document.getElementById('hardMode');
 
-// Set up UI
+// Game UI Elements
+const gameContainer = document.getElementById('gameContainer');
+const ui = document.getElementById('ui');
 const scoreElement = document.getElementById('score');
 const timeElement = document.getElementById('time');
 const shopButton = document.getElementById('shopButton');
@@ -32,24 +36,14 @@ const shopElement = document.getElementById('shop');
 const buyWeapon1Button = document.getElementById('buyWeapon1');
 const buyWeapon2Button = document.getElementById('buyWeapon2');
 
-// Keydown listener
-window.addEventListener('keydown', (e) => {
-    keys[e.key] = true;
-});
-
-// Keyup listener
-window.addEventListener('keyup', (e) => {
-    keys[e.key] = false;
-});
+// Start Game with selected mode
+easyModeButton.addEventListener('click', () => startGame('easy'));
+hardModeButton.addEventListener('click', () => startGame('hard'));
 
 // Shop button toggle
 shopButton.addEventListener('click', () => {
     isShopOpen = !isShopOpen;
-    if (isShopOpen) {
-        shopElement.classList.remove('hidden');
-    } else {
-        shopElement.classList.add('hidden');
-    }
+    shopElement.classList.toggle('hidden', !isShopOpen);
 });
 
 // Weapon purchase logic
@@ -65,6 +59,28 @@ buyWeapon2Button.addEventListener('click', () => {
         currentWeapon = "God Blaster";
     }
 });
+
+// Game loop interval
+let gameInterval;
+
+function startGame(mode) {
+    // Hide the main menu and show the game container
+    mainMenu.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    ui.classList.remove('hidden');
+
+    // Set the mode difficulty
+    if (mode === 'easy') {
+        timeLeft = 1500; // 25 minutes
+        player.shootSpeed = 10;
+    } else {
+        timeLeft = 600; // 10 minutes
+        player.shootSpeed = 5;
+    }
+
+    // Initialize the game loop
+    gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
+}
 
 function gameLoop() {
     // Update game state
@@ -105,7 +121,7 @@ function updateBullets() {
     }
 }
 
-// Ball creation and movement
+// Ball creation and movement (flying towards the player)
 function updateBalls() {
     if (Math.random() < 0.02) {
         balls.push({
@@ -117,11 +133,10 @@ function updateBalls() {
         });
     }
 
-    balls.forEach((ball, index) => {
-        ball.y += ball.speed;
-        if (ball.y > canvas.height) {
-            balls.splice(index, 1); // Remove ball if it goes off-screen
-        }
+    balls.forEach(ball => {
+        const angle = Math.atan2(player.y - ball.y, player.x - ball.x);
+        ball.x += Math.cos(angle) * ball.speed;
+        ball.y += Math.sin(angle) * ball.speed;
     });
 }
 
@@ -180,7 +195,9 @@ function drawUI() {
 function updateTime() {
     timeLeft -= 1 / 60;
     if (timeLeft <= 0) {
+        clearInterval(gameInterval);
         alert("Game Over! Time's up!");
         window.location.reload();
     }
 }
+
